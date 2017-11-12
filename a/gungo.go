@@ -1,0 +1,106 @@
+package main
+
+import (
+	"encoding/json"
+	"errors"
+	"log"
+)
+
+//GunNode Node Instance
+type GunNode map[string]interface{}
+
+//Init Initialise the Node with the given Name
+func (node GunNode) Init(name string) error {
+	if node == nil {
+		node = make(map[string]interface{})
+	}
+
+	nameNode := make(map[string]string)
+	nameNode["#"] = name
+
+	err := node.SetKV("_", nameNode)
+	if err != nil {
+		log.Printf("node.SetKV( nameNode) Error: %s", err.Error())
+	}
+	return nil
+}
+
+//SetKV Set the Key with Value
+func (node GunNode) SetKV(key string, value interface{}) error {
+	if node == nil {
+		node = make(map[string]interface{})
+	}
+
+	if node[key] == nil {
+		node[key] = make(map[string]interface{})
+	}
+
+	if (node == nil) || (node[key] == nil) {
+		return errors.New("SETKV.NODENOTINITIALIZED")
+	}
+	node[key] = value
+	return nil
+}
+
+//GetKV Get the Key's Value
+func (node GunNode) GetKV(key string) (interface{}, error) {
+	if node == nil {
+		node = make(map[string]interface{})
+		return "", errors.New("GETKV.NODENOTINITIALIZED")
+	}
+
+	if node[key] == nil {
+		node[key] = make(map[string]interface{})
+		return "", errors.New("GETKV.NODEKEYNOTINITIALIZED")
+	}
+
+	return node[key], nil
+}
+
+//GunDB Collection of all the GunNodes
+type GunDB map[string]interface{}
+
+//ExportJSON Export the DB in GunJS Compatible JSON Format
+func (db GunDB) ExportJSON(keys []string) error {
+	return nil
+}
+
+func main() {
+	var mydb GunDB = make(map[string]interface{})
+
+	var n1 GunNode = make(map[string]interface{})
+	n1.Init("n1")
+	n1.SetKV("a", "b")
+	x, err := n1.GetKV("a")
+	if err != nil {
+		log.Printf("n1.GetKV Error:%v", err)
+	}
+
+	var n2 GunNode = make(map[string]interface{})
+	n2.SetKV("a", "b")
+	y, err := n2.GetKV("a")
+	if err != nil {
+		log.Printf("n2.GetKV Error:%v", err)
+	}
+
+	mydb["n1"] = n1
+	mydb["n2"] = n2
+
+	log.Printf("mydb:\t %T\t %v", mydb, mydb)
+	log.Printf("x:\t %T\t %v", x, x)
+	log.Printf("y:\t %T\t %v", y, y)
+
+	jsondb, err := json.Marshal(mydb)
+	if err != nil {
+		log.Printf("json.Marshal(mydb) Error:%s", err.Error())
+	}
+	log.Printf("jsondb:\t %T\t %v\t %s", jsondb, jsondb, string(jsondb))
+
+	var tempdb GunDB = make(map[string]interface{})
+	err = json.Unmarshal(jsondb, &tempdb)
+	if err != nil {
+		log.Printf("json.Unmarshal(jsondb, &tempdb) Error:%s", err.Error())
+	}
+	log.Printf("tempdb:\t %T\t %v", tempdb, tempdb)
+
+}

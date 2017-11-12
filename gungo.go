@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-
 	"log"
+	"reflect"
 )
 
 //GunGraph DB Instance
@@ -61,7 +61,18 @@ func main() {
 	//Trying out Traversals
 	log.Print("tempDB.Graph[ASDF]\t", tempDB.Graph["ASDF"])
 	t = tempDB.Graph["ASDF"].(map[string]interface{})
+	log.Printf("new boss type: %s", reflect.TypeOf(t["boss"]))
 	newboss := t["boss"].(map[string]interface{})
+	log.Printf("new boss type: %s", reflect.TypeOf(newboss))
 	newbossnode := newboss["#"].(string)
 	log.Print("n1 boss\t", t["boss"], tempDB.Graph[newbossnode])
+
+	log.Print("\n############### copying tempDB to DB ############")
+
+	db = tempDB
+	log.Print("db.Graph[ASDF]\t", db.Graph["ASDF"])
+	t = db.Graph["ASDF"].(map[string]interface{})
+	tboss := t["boss"].(map[string]interface{})
+	log.Print("n1 boss\t", t["boss"], db.Graph[tboss["#"].(string)])
+
 }
