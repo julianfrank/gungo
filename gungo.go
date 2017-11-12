@@ -50,7 +50,12 @@ func main() {
 	tempDB := db
 	err = json.Unmarshal(dbjson, &tempDB)
 	log.Printf("tempDB \tType:%T\tValue:%v", tempDB, tempDB)
-	//Trying Out Traversal
-	//db.Graph = tempDB.Graph.(map[string]interface{})
-	//log.Print(db.Graph["ASDF"]["boss"])
+
+	//Trying out Traversals
+	log.Print("tempDB.Graph[ASDF]\t", tempDB.Graph["ASDF"])
+	t = tempDB.Graph["ASDF"].(map[string]interface{})
+	newboss := t["boss"].(map[string]interface{})
+	x := newboss["#"]
+	log.Print("n1 boss\t", x, t["boss"]) //, tempDB.Graph[newboss["#"]])
+
 }
