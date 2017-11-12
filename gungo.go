@@ -38,24 +38,30 @@ func main() {
 	db.Graph["FDSA"] = n2Node
 
 	//Trying out Traversals
+	log.Print("\n############### Traversal before conversion to JSON ############")
 	log.Print("db.Graph[ASDF]\t", db.Graph["ASDF"])
 	t := db.Graph["ASDF"].(map[string]interface{})
 	boss := t["boss"].(map[string]string)
 	log.Print("n1 boss\t", t["boss"], db.Graph[boss["#"]])
 
 	//Converting DB to JSON for communication with Peers
+	log.Print("\n###############  JSON format ############")
 	dbjson, err := json.Marshal(db)
 	log.Print("string(dbjson), err\t", string(dbjson), err)
 	//Checking Reverse MApping back to DB from json format
-	tempDB := db
-	err = json.Unmarshal(dbjson, &tempDB)
-	log.Printf("tempDB \tType:%T\tValue:%v", tempDB, tempDB)
+	var intermediateinterface interface{}
+	err = json.Unmarshal(dbjson, &intermediateinterface)
+	m := intermediateinterface.(map[string]interface{})
 
+	var tempDB GunGraph
+	tempDB.Graph = m["Graph"].(map[string]interface{})
+	log.Printf("tempDB Parsed from JSON\tType:%T\tValue:%v\n", tempDB, tempDB)
+
+	log.Print("\n############### Traversal after parsing from JSON ############")
 	//Trying out Traversals
 	log.Print("tempDB.Graph[ASDF]\t", tempDB.Graph["ASDF"])
 	t = tempDB.Graph["ASDF"].(map[string]interface{})
 	newboss := t["boss"].(map[string]interface{})
-	x := newboss["#"]
-	log.Print("n1 boss\t", x, t["boss"]) //, tempDB.Graph[newboss["#"]])
-
+	newbossnode := newboss["#"].(string)
+	log.Print("n1 boss\t", t["boss"], tempDB.Graph[newbossnode])
 }
