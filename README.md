@@ -1,4 +1,4 @@
 # gungo
 
 
-Go Peer for GunJS
+Go Peer for GunJS (WIP)

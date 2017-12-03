@@ -2,77 +2,105 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
-	"reflect"
 )
 
-//GunGraph DB Instance
-type GunGraph struct {
-	Graph map[string]interface{}
+//GunNode Node Instance
+type GunNode map[string]interface{}
+
+//Init Initialise the Node with the given Name
+func (node GunNode) Init(name string) error {
+	if node == nil {
+		node = make(map[string]interface{})
+	}
+
+	nameNode := make(map[string]string)
+	nameNode["#"] = name
+
+	err := node.SetKV("_", nameNode)
+	if err != nil {
+		log.Printf("node.SetKV( nameNode) Error: %s", err.Error())
+	}
+	return nil
+}
+
+//SetKV Set the Key with Value
+func (node GunNode) SetKV(key string, value interface{}) error {
+	if node == nil {
+		node = make(map[string]interface{})
+	}
+
+	if node[key] == nil {
+		node[key] = make(map[string]interface{})
+	}
+
+	if (node == nil) || (node[key] == nil) {
+		return errors.New("SETKV.NODENOTINITIALIZED")
+	}
+	node[key] = value
+	return nil
+}
+
+//GetKV Get the Key's Value
+func (node GunNode) GetKV(key string) (interface{}, error) {
+	if node == nil {
+		node = make(map[string]interface{})
+		return "", errors.New("GETKV.NODENOTINITIALIZED")
+	}
+
+	if node[key] == nil {
+		node[key] = make(map[string]interface{})
+		return "", errors.New("GETKV.NODEKEYNOTINITIALIZED")
+	}
+
+	return node[key], nil
+}
+
+//GunDB Collection of all the GunNodes
+type GunDB map[string]interface{}
+
+//ExportJSON Export the DB in GunJS Compatible JSON Format
+func (db GunDB) ExportJSON(keys []string) error {
+	return nil
 }
 
 func main() {
+	var mydb GunDB = make(map[string]interface{})
 
-	//Instantiating the DB here
-	var db GunGraph
-	db.Graph = make(map[string]interface{})
+	var n1 GunNode = make(map[string]interface{})
+	n1.Init("n1")
+	n1.SetKV("a", "b")
+	x, err := n1.GetKV("a")
+	if err != nil {
+		log.Printf("n1.GetKV Error:%v", err)
+	}
 
-	//Creating the First Node here
-	n1ID := make(map[string]string)
-	n1ID["#"] = "ASDF"
-	n1Node := make(map[string]interface{})
-	n1Node["_"] = n1ID
-	n1Node["Name"] = "JF"
-	//Creating the Second Node here
-	n2ID := make(map[string]string)
-	n2ID["#"] = "FDSA"
-	n2Node := make(map[string]interface{})
-	n2Node["_"] = n2ID
-	n2Node["Name"] = "Fluffy"
-	n2Node["Species"] = "Cat"
-	//Connecting both nodes here
-	n1Node["boss"] = n2ID
-	n2Node["slave"] = n1ID
-	//Adding the nodes to the DB
-	db.Graph["ASDF"] = n1Node
-	db.Graph["FDSA"] = n2Node
+	var n2 GunNode = make(map[string]interface{})
+	n2.SetKV("a", "b")
+	y, err := n2.GetKV("a")
+	if err != nil {
+		log.Printf("n2.GetKV Error:%v", err)
+	}
 
-	//Trying out Traversals
-	log.Print("\n############### Traversal before conversion to JSON ############")
-	log.Print("db.Graph[ASDF]\t", db.Graph["ASDF"])
-	t := db.Graph["ASDF"].(map[string]interface{})
-	boss := t["boss"].(map[string]string)
-	log.Print("n1 boss\t", t["boss"], db.Graph[boss["#"]])
+	mydb["n1"] = n1
+	mydb["n2"] = n2
 
-	//Converting DB to JSON for communication with Peers
-	log.Print("\n###############  JSON format ############")
-	dbjson, err := json.Marshal(db)
-	log.Print("string(dbjson), err\t", string(dbjson), err)
-	//Checking Reverse MApping back to DB from json format
-	var intermediateinterface interface{}
-	err = json.Unmarshal(dbjson, &intermediateinterface)
-	m := intermediateinterface.(map[string]interface{})
+	log.Printf("mydb:\t %T\t %v", mydb, mydb)
+	log.Printf("x:\t %T\t %v", x, x)
+	log.Printf("y:\t %T\t %v", y, y)
 
-	var tempDB GunGraph
-	tempDB.Graph = m["Graph"].(map[string]interface{})
-	log.Printf("tempDB Parsed from JSON\tType:%T\tValue:%v\n", tempDB, tempDB)
+	jsondb, err := json.Marshal(mydb)
+	if err != nil {
+		log.Printf("json.Marshal(mydb) Error:%s", err.Error())
+	}
+	log.Printf("jsondb:\t %T\t %v\t %s", jsondb, jsondb, string(jsondb))
 
-	log.Print("\n############### Traversal after parsing from JSON ############")
-	//Trying out Traversals
-	log.Print("tempDB.Graph[ASDF]\t", tempDB.Graph["ASDF"])
-	t = tempDB.Graph["ASDF"].(map[string]interface{})
-	log.Printf("new boss type: %s", reflect.TypeOf(t["boss"]))
-	newboss := t["boss"].(map[string]interface{})
-	log.Printf("new boss type: %s", reflect.TypeOf(newboss))
-	newbossnode := newboss["#"].(string)
-	log.Print("n1 boss\t", t["boss"], tempDB.Graph[newbossnode])
-
-	log.Print("\n############### copying tempDB to DB ############")
-
-	db = tempDB
-	log.Print("db.Graph[ASDF]\t", db.Graph["ASDF"])
-	t = db.Graph["ASDF"].(map[string]interface{})
-	tboss := t["boss"].(map[string]interface{})
-	log.Print("n1 boss\t", t["boss"], db.Graph[tboss["#"].(string)])
+	var tempdb GunDB = make(map[string]interface{})
+	err = json.Unmarshal(jsondb, &tempdb)
+	if err != nil {
+		log.Printf("json.Unmarshal(jsondb, &tempdb) Error:%s", err.Error())
+	}
+	log.Printf("tempdb:\t %T\t %v", tempdb, tempdb)
 
 }
