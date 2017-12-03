@@ -1,50 +1,19 @@
-package main
-
-import (
-	"log"
-	"os"
-	"os/signal"
-
-	"github.com/gorilla/websocket"
-)
-
-//Gun Structure containing the key object
-type Gun struct {
-	DB    map[string]string //Hold the Database in this map
-	peers []struct {
-		URLPath string         //URL Path (url + Path including ws/wss)
-		Wire    websocket.Conn //Hold the Connections in this Connection Slice
-		/*		Open      interface{}    //Open Method
-				OnOpen    interface{}
-				Close     interface{}
-				onClose   interface{}
-				Send      interface{}
-				onMessage interface{}
-				onError   interface{}*/
-	}
-}
-
-//Init Initialize the DB Manager
-func (gun Gun) Init(opts map[string]string) {
-	log.Println(opts)
+//Connect connector function
+func Connect(opt map[string]string) {
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
-	done := make(chan struct{})
 
-	defer close(done)
-
-}
-
-/*
-	u := url.URL{Scheme: "wss", Host: opts["peerURL"], Path: opts["gunPath"]}
-	log.Printf("gungo Going to work with \tpeerURL:%s\tgunPath:%s\tusing String:%s", opts["peerURL"], opts["gunPath"], u.String())
+	u := url.URL{Scheme: "wss", Host: opt["peerURL"], Path: opt["gunPath"]}
+	log.Printf("gungo Going to work with \tpeerURL:%s\tgunPath:%s\tusing String:%s", opt["peerURL"], opt["gunPath"], u.String())
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		log.Fatal("dial err:", err)
 	}
 	//defer c.Close()
+
+	done := make(chan struct{})
 
 	go func() {
 		//defer c.Close()
@@ -61,6 +30,7 @@ func (gun Gun) Init(opts map[string]string) {
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
+
 	for {
 		select {
 		case t := <-ticker.C:
@@ -87,5 +57,6 @@ func (gun Gun) Init(opts map[string]string) {
 			return
 		}
 	}
+}
 
-*/
+//----------------------------------------###########################################################################################33
