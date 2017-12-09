@@ -15,17 +15,18 @@ var (
 	gunDebug bool
 )
 
-func gunLog(msgFormat string, msg interface{}) {
+func gunLog(msgFormat string, msg ...interface{}) {
 	if gunDebug {
-		fmt.Printf(msgFormat+"\n", msg)
+		fmt.Printf(msgFormat+"\n", msg...)
 	}
 }
-func gunErr(msgFormat string, msg interface{}) {
-	log.Printf(msgFormat, msg)
+func gunErr(msgFormat string, msg ...interface{}) {
+	log.Printf(msgFormat, msg...)
 }
-func gunTimed(msgFormat string, msg interface{}, startTime time.Time) {
+func gunTimed(msgFormat string, startTime time.Time, msg ...interface{}) {
 	if gunDebug {
-		log.Printf(msgFormat+"\t%s", msg, time.Since(startTime))
+		msg = append(msg, time.Since(startTime))
+		log.Printf(msgFormat+"\t%s", msg...)
 	}
 }
 
@@ -46,22 +47,28 @@ type GunPeer struct {
 }
 
 //Open Open a New Peer
-func (gunPeer GunPeer) Open(peerURL url.URL) {
-	//startTime := time.Now()
+func (gunPeer GunPeer) Open(peerURL url.URL, origin url.URL) {
+	startTime := time.Now()
 	if gunPeer.Connected == true {
 		gunErr("gungo.go::GunPeer.Open Error: Peer Already Exists -> url:%s", gunPeer.url.String())
-		panic("")
 	} else {
 		var err error
-		var peerStr = peerURL.String()
-		var origin = "http://localhost/"
-		gunLog("gungo.go::GunPeer.Open peerURL:%s", peerStr)
-		peerStr = "wss://gunjs.herokuapp.com/gun"
-		gunPeer.Wire, err = websocket.Dial(peerStr, "", origin)
+		gunLog("gungo.go::GunPeer.Open\tpeerURL: %s\torigin: %s", peerURL.String(), origin.String())
+		gunPeer.Wire, err = websocket.Dial(peerURL.String(), "", origin.String())
 		if err != nil {
 			gunErr("gungo.go::GunPeer.Open::websocket.Dial(peerURL.String(),... Error:%s", err)
 		}
 		defer gunPeer.Wire.Close()
+		gunTimed("gungo.go::GunPeer.Open Success", startTime)
+
+		for {
+			msg := make([]byte, 512)
+			n, err := gunPeer.Wire.Read(msg)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("Receive: %s\n", msg[:n])
+		}
 	}
 }
 
@@ -84,7 +91,7 @@ func (gun Gun) Init(opts map[string]interface{}) {
 	gun.DB = make(map[string]interface{})
 
 	if opts["peerURL"] != nil {
-		gun.peer.Open(opts["peerURL"].(url.URL))
+		gun.peer.Open(opts["peerURL"].(url.URL), opts["origin"].(url.URL))
 	}
 }
 
