@@ -9,22 +9,22 @@ import (
 //GunServer Gun server Structure
 type GunServer struct {
 	pattern   string
-	messages  []*Message
+	messages  []*[]byte
 	gunPeers  map[int]*GunPeer
 	addCh     chan *GunPeer
 	delCh     chan *GunPeer
-	sendAllCh chan *Message
+	sendAllCh chan *[]byte
 	doneCh    chan bool
 	errCh     chan error
 }
 
 //NewGunServer Create new Gun server
 func NewGunServer(pattern string) *GunServer {
-	messages := []*Message{}
+	messages := make([]*[]byte, channelBufSize)
 	gunPeers := make(map[int]*GunPeer)
 	addCh := make(chan *GunPeer)
 	delCh := make(chan *GunPeer)
-	sendAllCh := make(chan *Message)
+	sendAllCh := make(chan *[]byte)
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 	return &GunServer{pattern, messages, gunPeers, addCh, delCh, sendAllCh, doneCh, errCh}
@@ -41,7 +41,7 @@ func (gunServer *GunServer) Del(gunPeer *GunPeer) {
 }
 
 //SendAll Flush All Messages
-func (gunServer *GunServer) SendAll(message *Message) {
+func (gunServer *GunServer) SendAll(message *[]byte) {
 	gunServer.sendAllCh <- message
 }
 
@@ -61,7 +61,7 @@ func (gunServer *GunServer) sendPastMessages(gunPeer *GunPeer) {
 	}
 }
 
-func (gunServer *GunServer) sendAll(message *Message) {
+func (gunServer *GunServer) sendAll(message *[]byte) {
 	for _, gunPeer := range gunServer.gunPeers {
 		gunPeer.Write(message)
 	}

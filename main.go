@@ -3,11 +3,13 @@ package main
 import (
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/julianfrank/gungo/gungo"
 )
 
 func main() {
+
 	// websocket server
 	server := gungo.NewGunServer("/gun")
 	go server.Listen()
@@ -15,14 +17,18 @@ func main() {
 	// static files
 	http.Handle("/", http.FileServer(http.Dir("webroot")))
 
+	opts := make(map[string]interface{})
+	opts["debug"] = "true"
+	peerURL := url.URL{Scheme: "wss", Host: "gunjs.herokuapp.com", Path: "/gun"}
+	originURL := url.URL{Scheme: "http", Host: "localhost", Path: "/"}
+	ws, _ := gungo.NewWS(peerURL, originURL)
+	c := gungo.NewGunPeer(ws, server)
+	go c.Listen()
+
+	for index := 0; index < 16; index++ {
+		msg := []byte("hi")
+		c.Write(&msg)
+	}
+
 	log.Fatal(http.ListenAndServe(":7777", nil))
 }
-
-/*
-var myDB Gun
-opts := make(map[string]interface{})
-	opts["debug"] = "true"
-	opts["peerURL"] = url.URL{Scheme: "wss", Host: "gunjs.herokuapp.com", Path: "/gun"}
-	opts["origin"] = url.URL{Scheme: "http", Host: "localhost", Path: "/"}
-	myDB.Init(opts)
-*/

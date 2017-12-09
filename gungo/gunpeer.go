@@ -1,10 +1,10 @@
 package gungo
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 
 	"golang.org/x/net/websocket"
 )
@@ -13,24 +13,12 @@ const channelBufSize = 100
 
 var maxID int
 
-//Message Structur to hold each Message between Peers
-type Message []byte
-
-//String Convert Message to String when Needed
-func (message *Message) String() string {
-	out, err := json.Marshal(message)
-	if err != nil {
-		return gunErr("gunpeer.go::Message.String::json.Marshal(message) Error: %s", err.Error())
-	}
-	return string(out)
-}
-
 //GunPeer Structure to Hold Each Gun Peer
 type GunPeer struct {
 	id     int
 	ws     *websocket.Conn
 	server *GunServer
-	ch     chan *Message
+	ch     chan *[]byte
 	doneCh chan bool
 }
 
@@ -46,10 +34,22 @@ func NewGunPeer(ws *websocket.Conn, gunServer *GunServer) *GunPeer {
 	}
 
 	maxID++
-	ch := make(chan *Message, channelBufSize)
+	ch := make(chan *[]byte, channelBufSize)
 	doneCh := make(chan bool)
 
 	return &GunPeer{maxID, ws, gunServer, ch, doneCh}
+}
+
+//NewWS Create New WebSocket Client Directly
+func NewWS(peerURL url.URL, origin url.URL) (*websocket.Conn, error) {
+	gunLog("gungo.go::GunPeer.Open\tpeerURL: %s\torigin: %s", peerURL.String(), origin.String())
+	ws, err := websocket.Dial(peerURL.String(), "", origin.String())
+	if err != nil {
+		gunErr("gungo.go::GunPeer.Open::websocket.Dial(peerURL.String(),... Error:%s", err)
+		return nil, err
+	}
+	defer ws.Close()
+	return ws, nil
 }
 
 //Conn Method for GunPeer
@@ -58,7 +58,7 @@ func (gunPeer *GunPeer) Conn() *websocket.Conn {
 }
 
 //Write Method for GunPeer
-func (gunPeer *GunPeer) Write(message *Message) {
+func (gunPeer *GunPeer) Write(message *[]byte) {
 	select {
 	case gunPeer.ch <- message:
 	default:
@@ -89,7 +89,7 @@ func (gunPeer *GunPeer) listenWrite() {
 		// send message to the GunPeer
 		case message := <-gunPeer.ch:
 			log.Println("Send:", message)
-			websocket.JSON.Send(gunPeer.ws, message)
+			websocket.Message.Send(gunPeer.ws, message)
 
 		// receive done request
 		case <-gunPeer.doneCh:
@@ -114,7 +114,7 @@ func (gunPeer *GunPeer) listenRead() {
 
 		// read data from websocket connection
 		default:
-			var message Message
+			var message []byte
 			err := websocket.Message.Receive(gunPeer.ws, &message)
 			if err == io.EOF {
 				gunPeer.doneCh <- true
