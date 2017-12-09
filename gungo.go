@@ -31,39 +31,38 @@ func gunTimed(msgFormat string, msg interface{}, startTime time.Time) {
 
 //Gun Structure containing the key object
 type Gun struct {
-	DB map[string]interface{} //Hold the Database in this map
-
-	peers map[string]gunPeer //Hold the Peers
+	DB   map[string]interface{} //Hold the Database in this map
+	peer GunPeer                //Hold the Peer
 
 	interrupt chan os.Signal
 	done      chan struct{}
 }
-type gunPeer struct {
-	url  url.URL        //URL Object with Scheme, Host and Path
-	Wire websocket.Conn //Hold the Connections in this Connection
+
+//GunPeer Structure to Hold the Connection with Peer
+type GunPeer struct {
+	url       url.URL         //URL Object with Scheme, Host and Path
+	Wire      *websocket.Conn //Hold the Connections in this Connection
+	Connected bool            //Connection status
 }
 
 //Open Open a New Peer
-func (gun Gun) Open(peerURL url.URL) {
+func (gunPeer GunPeer) Open(peerURL url.URL) {
 	//startTime := time.Now()
-	peerStr := peerURL.String()
-	gunLog("gungo.go::Gun.Open peerURL:%s", peerStr)
-
-	if peer, ok := gun.peers[peerStr]; ok {
-		gunErr("gungo.go::Gun.Open Error: Peer Already Exists -> peerStr:%s", peer.url.String())
+	if gunPeer.Connected == true {
+		gunErr("gungo.go::GunPeer.Open Error: Peer Already Exists -> url:%s", gunPeer.url.String())
+		panic("")
 	} else {
-
-		var newPeer gunPeer
-		gun.peers[peerStr] = newPeer
-
-		c, err := websocket.Dial(peerStr, "", "")
+		var err error
+		var peerStr = peerURL.String()
+		var origin = "http://localhost/"
+		gunLog("gungo.go::GunPeer.Open peerURL:%s", peerStr)
+		peerStr = "wss://gunjs.herokuapp.com/gun"
+		gunPeer.Wire, err = websocket.Dial(peerStr, "", origin)
 		if err != nil {
-			gunErr("gungo.go::Gun.Open::websocket.DefaultDialer.Dial(peerStr, nil) Error:%s", err)
+			gunErr("gungo.go::GunPeer.Open::websocket.Dial(peerURL.String(),... Error:%s", err)
 		}
-
-		defer c.Close()
+		defer gunPeer.Wire.Close()
 	}
-
 }
 
 //Init Initialize the DB Manager
@@ -83,10 +82,9 @@ func (gun Gun) Init(opts map[string]interface{}) {
 	defer close(gun.done)
 
 	gun.DB = make(map[string]interface{})
-	gun.peers = make(map[string]gunPeer)
 
 	if opts["peerURL"] != nil {
-		gun.Open(opts["peerURL"].(url.URL))
+		gun.peer.Open(opts["peerURL"].(url.URL))
 	}
 }
 

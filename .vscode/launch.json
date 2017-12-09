@@ -5,10 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "node",
+            "name": "Launch",
+            "type": "go",
             "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceFolder}/testgunserver/gunserver.js"
+            "mode": "debug",
+            "remotePath": "",
+            "port": 2345,
+            "host": "127.0.0.1",
+            "program": "${fileDirname}",
+            "env": {},
+            "args": [],
+            "showLog": true
         }
     ]
 }
