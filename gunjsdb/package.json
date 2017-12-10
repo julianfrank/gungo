@@ -1,0 +1,15 @@
+{
+  "name": "gunjsdb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ex.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    
+    "gun-server": "^1.0.0"
+  }
+}
