@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/julianfrank/gungo/gungo"
 )
@@ -23,10 +24,12 @@ func main() {
 	originURL := url.URL{Scheme: "http", Host: "localhost", Path: "/"}
 	ws, _ := gungo.NewWS(peerURL, originURL)
 	c := gungo.NewGunPeer(ws, server)
-	go c.Listen()
+	server.Add(c)
+	c.Listen()
 
-	for index := 0; index < 16; index++ {
-		msg := []byte("hi")
+	for index := 0; index < 4; index++ {
+		time.Sleep(time.Second)
+		msg := []byte(`network`)
 		c.Write(&msg)
 	}
 

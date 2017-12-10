@@ -76,7 +76,8 @@ func (gunPeer *GunPeer) Done() {
 // Listen Write and Read request via chanel
 func (gunPeer *GunPeer) Listen() {
 	go gunPeer.listenWrite()
-	gunPeer.listenRead()
+	go gunPeer.listenRead()
+
 }
 
 // Listen write request via chanel
@@ -88,9 +89,10 @@ func (gunPeer *GunPeer) listenWrite() {
 
 		// send message to the GunPeer
 		case message := <-gunPeer.ch:
-			log.Println("Send:", message)
-			websocket.Message.Send(gunPeer.ws, message)
-
+			if message != nil {
+				log.Println("Send:", string(*message))
+				websocket.Message.Send(gunPeer.ws, *message)
+			}
 		// receive done request
 		case <-gunPeer.doneCh:
 			gunPeer.server.Del(gunPeer)
